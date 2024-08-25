@@ -9,18 +9,24 @@ public class Garcom extends Thread {
     public void run() {
         while (true) {
             try {
+                if (mesas.length == 0) {
+                    System.out.println("Nenhuma mesa disponível para inspeção.");
+                    Thread.sleep(1500);
+                    continue;
+                }
+
                 for (Mesa mesa : mesas) {
-                    if (mesa.isVazia()) {
-                        System.out.println("Garçom inspecionou a mesa " + mesa.getId());
-                        Thread.sleep(500);
-                    }
+                    System.out.println("Garçom inspecionou a mesa " + mesa.getId());
+                    Thread.sleep(500);
                 }
                 Thread.sleep(1500);
+
             } catch (InterruptedException e) {
                 e.printStackTrace();
+                Thread.currentThread().interrupt();
             }
         }
     }
 
-}
 
+}
