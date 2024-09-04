@@ -1,71 +1,82 @@
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class Mesa {
     private final int id;
-    private final int maxClientes;
-    private int clientesAtuais;
-    private final Semaphore mutex;
-    private final Semaphore garcomMutex;
+    private final int capacidade;
+    private int ocupacaoAtual;
+    private final Semaphore semaphore;
+    private final Lock lock;
     private boolean precisaInspecao;
 
-    public Mesa(int id, int maxClientes) {
+    public Mesa(int id, int capacidade) {
         this.id = id;
-        this.maxClientes = maxClientes;
-        this.clientesAtuais = 0;
-        this.mutex = new Semaphore(1);
-        this.garcomMutex = new Semaphore(0);
+        this.capacidade = capacidade;
+        this.ocupacaoAtual = 0;
+        this.semaphore = new Semaphore(capacidade, true);
+        this.lock = new ReentrantLock();
         this.precisaInspecao = false;
     }
 
-    public boolean sentarCliente(int clienteId) {
+    public boolean tentarSentar() {
         try {
-            mutex.acquire();
-            if (clientesAtuais < maxClientes && !precisaInspecao) {
-                clientesAtuais++;
-                System.out.println("Cliente " + clienteId + " sentou na mesa " + id + ". Total na mesa: " + clientesAtuais);
-                mutex.release();
-                return true;
-            }
-            mutex.release();
-            return false;
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    public void sairCliente(int clienteId) {
-        try {
-            mutex.acquire();
-            clientesAtuais--;
-            System.out.println("Cliente " + clienteId + " saiu da mesa " + id + ". Total na mesa: " + clientesAtuais);
-            if (clientesAtuais == 0) {
-                precisaInspecao = true; // Marca que a mesa precisa ser inspecionada
-                garcomMutex.release();  // Libera o garçom para inspecionar a mesa
-            }
-            mutex.release();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void garcomInspecionar() {
-        try {
-            garcomMutex.acquire(); // Espera até que a mesa esteja vazia
-            mutex.acquire();
+            semaphore.acquire();
+            lock.lock();
             if (precisaInspecao) {
-                System.out.println("Garçom está inspecionando a mesa " + id);
-                Thread.sleep(500); // Tempo de inspeção
-                System.out.println("Garçom terminou de inspecionar a mesa " + id);
+                semaphore.release();
+                return false;
+            }
+            ocupacaoAtual++;
+            return true;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return false;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public void sair() {
+        lock.lock();
+        try {
+            if (ocupacaoAtual > 0) {
+                ocupacaoAtual--;
+                if (ocupacaoAtual == 0) {
+                    precisaInspecao = true;
+                }
+            }
+        } finally {
+            lock.unlock();
+            semaphore.release();
+        }
+    }
+
+    public void inspecionar() {
+        lock.lock();
+        try {
+            if (ocupacaoAtual == 0 && precisaInspecao) {
+                System.out.println("Garçom inspecionou a mesa " + id);
                 precisaInspecao = false;
             }
-            mutex.release();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        } finally {
+            lock.unlock();
         }
     }
 
     public int getId() {
         return id;
+    }
+
+    public int getOcupacaoAtual() {
+        return ocupacaoAtual;
+    }
+
+    public int getCapacidade() {
+        return capacidade;
+    }
+
+    public boolean precisaInspecao() {
+        return precisaInspecao;
     }
 }

@@ -1,36 +1,40 @@
 public class Cliente implements Runnable {
-    private static int nextId = 1;
+    private static int idCounter = 0;
     private final int id;
-    private int tentativas;
     private final Mesa mesa;
+    private static final int MAX_TENTATIVAS = 10;
 
     public Cliente(Mesa mesa) {
+        this.id = idCounter++;
         this.mesa = mesa;
-        this.id = nextId++;
-        this.tentativas = 1;
     }
 
     @Override
     public void run() {
-        while (tentativas < 10) {
-            try {
-                if (mesa.sentarCliente(id)) {
-                    System.out.println("Cliente " + id + " conseguiu sentar na mesa " + mesa.getId() + " após " + tentativas + " tentativas.");
-                    Thread.sleep((long) (Math.random() * 5000 + 3000));
-                    mesa.sairCliente(id);
-                    break;
-                } else {
-                    tentativas++;
-                    System.out.println("Cliente " + id + " (Tentativa " + tentativas + ") falhou ao tentar sentar na mesa " + mesa.getId());
-                    Thread.sleep(100);
+        int tentativas = 0;
+        while (tentativas < MAX_TENTATIVAS) {
+            if (mesa.tentarSentar()) {
+                System.out.println("Cliente " + id + " sentou na mesa " + mesa.getId() + " atualmente na mesa: " + mesa.getOcupacaoAtual());
+                try {
+                    Thread.sleep(1250); // Simula o tempo que o cliente fica na mesa
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
                 }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+                mesa.sair();
+                System.out.println("Cliente " + id + " saiu da mesa " + mesa.getId() + ", atualmente na mesa: " + mesa.getOcupacaoAtual());
+                break;
+            } else {
+                tentativas++;
+                System.out.println("Cliente " + id + " tentou sentar na mesa " + mesa.getId() + " (" + tentativas + "/" + MAX_TENTATIVAS + ")");
+                try {
+                    Thread.sleep(1850); // Espera antes de tentar novamente
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
             }
         }
-
-        if (tentativas >= 10) {
-            System.out.println("Cliente " + id + " desistiu após " + tentativas + " tentativas na mesa " + mesa.getId());
+        if (tentativas == MAX_TENTATIVAS) {
+            System.out.println("Cliente " + id + " desistiu após " + MAX_TENTATIVAS + " tentativas.");
         }
     }
 }
