@@ -40,8 +40,7 @@ public class BotecoGUI extends JFrame {
             mesaPanel.atualizar();
         }
     }
-
-    // Método para utilizar a variável mesas
+    
     public int getNumeroDeMesas() {
         return mesas.length;
     }
@@ -58,19 +57,16 @@ public class BotecoGUI extends JFrame {
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
 
-            // Fundo verde claro
             g.setColor(new Color(144, 238, 144));
             g.fillRect(0, 0, getWidth(), getHeight());
 
-            // Desenhar mesa redonda marrom
+
             g.setColor(new Color(139, 69, 19));
             g.fillOval(10, 10, getWidth() - 20, getHeight() - 40); // Mais espaço para o balcão
 
-            // Desenhar borda da mesa
             g.setColor(Color.BLACK);
             g.drawOval(10, 10, getWidth() - 20, getHeight() - 40); // Mais espaço para o balcão
 
-            // Informações da mesa dentro da mesa
             g.setColor(Color.BLACK);
             g.drawString("Mesa " + mesa.getId(), getWidth() / 2 - 20, getHeight() / 2 - 10);
             g.drawString("Ocupação: " + mesa.getOcupacaoAtual() + "/" + mesa.getCapacidade(), getWidth() / 2 - 30, getHeight() / 2 + 10);
@@ -80,7 +76,6 @@ public class BotecoGUI extends JFrame {
                 g.drawString("Precisa de inspeção", getWidth() / 2 - 30, getHeight() / 2 + 30);
             }
 
-            // Desenhar clientes como pontos
             g.setColor(Color.BLUE);
             int numClientes = mesa.getOcupacaoAtual();
             for (int i = 0; i < numClientes; i++) {
@@ -90,7 +85,6 @@ public class BotecoGUI extends JFrame {
                 g.fillOval(x - 5, y - 5, 10, 10);
             }
 
-            // Desenhar balcão na parte inferior
             g.setColor(new Color(139, 69, 19));
             g.fillRect(0, getHeight() - 20, getWidth(), 20);
             g.setColor(Color.BLACK);
